@@ -731,7 +731,10 @@ function closeDropdowns() {
   }
 }
 document.addEventListener("click", closeDropdowns);
-window.addEventListener("scroll", closeDropdowns, true);
+window.addEventListener("scroll", function (e) {
+  if (openDropdown && e.target.nodeType && openDropdown.panel.contains(e.target)) return;
+  closeDropdowns();
+}, true);
 window.addEventListener("resize", closeDropdowns);
 
 /* A facet with many values (System, Family, ...) collapses into a closed
