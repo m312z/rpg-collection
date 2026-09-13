@@ -200,6 +200,8 @@ footer.foot a{color:var(--ink-2)}
       <label for="group">Group</label>
       <select id="group"></select>
       <button class="btn sm" id="resetAll" type="button" hidden>Reset all</button>
+      <button class="btn sm" id="shareBtn" type="button"
+        title="Copy a link that carries the sheet and the current view">Copy shareable link</button>
     </div>
     <div class="active-pills" id="pills"></div>
     <div id="results"></div>
@@ -229,7 +231,7 @@ footer.foot a{color:var(--ink-2)}
 
    To get it: in Google Sheets open  File > Share > Publish to web,
    pick the COLLECTION TAB in the left dropdown (not "Entire document" --
-   your sheet also holds a Kickstarter tab with pledge amounts), choose
+   other tabs may hold things you would rather not publish), choose
    "Comma-separated values (.csv)", press Publish, and copy the URL.
 
    Paste it between the quotes below and the page is live and shareable.
@@ -377,9 +379,18 @@ const S = { q: "", filters: {}, sort: "title-asc", group: "none", view: "grid", 
 
 /* ---------------- load ---------------- */
 function resolveUrl() {
-  const params = new URLSearchParams(location.search);
-  const fromQuery = params.get("csv");
-  if (fromQuery) return { url: fromQuery, origin: "query string" };
+  /* Deliberately not URLSearchParams: a published-sheet link carries its own
+     &single=true&output=csv, and if it was pasted unencoded those read as
+     separate parameters of this page, truncating the link at the first &.
+     csv= is the only parameter this page uses (state lives in the hash), so
+     everything after it is the link. Encoded links still work. */
+  const rawQuery = location.search.replace(/^\?/, "");
+  const m = rawQuery.match(/(?:^|&)csv=(.+)$/);
+  if (m) {
+    let fromQuery = m[1];
+    try { fromQuery = decodeURIComponent(fromQuery); } catch (e) { /* leave as-is */ }
+    return { url: fromQuery, origin: "query string" };
+  }
   if (CONFIG.csvUrl) return { url: CONFIG.csvUrl, origin: "config" };
   const saved = store("rpgCsvUrl");
   if (saved) return { url: saved, origin: "saved in this browser" };
@@ -499,9 +510,18 @@ function fail(kind, target, detail) {
   } else if (kind === "http") {
     box.appendChild(el("p", null, detail + ". If this is 401 or 404, the tab is not published to the web."));
   } else if (kind === "html") {
-    box.appendChild(el("p", null,
-      "That URL returned a web page instead of CSV — it looks like a normal Sheets edit link. " +
-      "Use Publish to web and pick “Comma-separated values (.csv)”."));
+    if (target.origin === "query string" && !/output=csv/i.test(target.url)) {
+      // The link lost its tail. Percent-encoding the whole link fixes it.
+      box.appendChild(el("p", null,
+        "That URL returned a web page instead of CSV, because the link is incomplete — it is " +
+        "missing its output=csv part. A published-sheet link contains & characters, and pasting it " +
+        "raw after ?csv= cuts it short. Paste the full link into the box below instead, and use the " +
+        "Copy shareable link button to get a URL that survives being shared."));
+    } else {
+      box.appendChild(el("p", null,
+        "That URL returned a web page instead of CSV — it looks like a normal Sheets edit link. " +
+        "Use Publish to web and pick “Comma-separated values (.csv)”."));
+    }
   } else if (kind === "schema") {
     box.appendChild(el("p", null, detail));
   } else {
@@ -511,7 +531,7 @@ function fail(kind, target, detail) {
   const ol = el("ol");
   [
     "In Google Sheets: File › Share › Publish to web.",
-    "In the left dropdown pick your collection tab — not “Entire document”. Your sheet also has a Kickstarter tab with pledge amounts, and publishing everything would expose it.",
+    "In the left dropdown pick your collection tab — not “Entire document”. Other tabs may hold things you would rather not publish; one tab exposes only that tab.",
     "In the right dropdown pick “Comma-separated values (.csv)”, then press Publish.",
     "Copy the link it gives you and paste it below."
   ].forEach(function (t) { ol.appendChild(el("li", null, t)); });
@@ -1068,6 +1088,48 @@ function closeDetail() {
   $("scrim").classList.remove("on");
 }
 
+/* Build a link that carries both the sheet and the current view. The sheet link
+   is percent-encoded, so its own &single=true&output=csv cannot be mistaken for
+   parameters of this page. */
+function shareableLink() {
+  const t = DATA.source || resolveUrl();
+  let out = location.origin + location.pathname;
+  if (t.url && t.origin !== "local sample file") {
+    out += "?csv=" + encodeURIComponent(t.url);
+  }
+  return out + location.hash;
+}
+
+function wireShare() {
+  const btn = $("shareBtn");
+  if (!btn) return;
+  btn.onclick = async function () {
+    const link = shareableLink();
+    const said = function (msg) {
+      btn.textContent = msg;
+      setTimeout(function () { btn.textContent = "Copy shareable link"; }, 1800);
+    };
+    try {
+      await navigator.clipboard.writeText(link);
+      said("Copied");
+    } catch (e) {
+      // Clipboard needs a secure context and permission; show the link instead.
+      const box = el("div", "notice");
+      box.appendChild(el("h2", null, "Copy this link"));
+      const inp = el("input");
+      inp.type = "text";
+      inp.value = link;
+      inp.readOnly = true;
+      inp.style.width = "100%";
+      box.appendChild(inp);
+      $("notices").innerHTML = "";
+      $("notices").appendChild(box);
+      inp.focus(); inp.select();
+      said("See above");
+    }
+  };
+}
+
 /* ---------------- shareable URL state ---------------- */
 let hashLock = false;
 function writeHash() {
@@ -1170,6 +1232,7 @@ window.addEventListener("hashchange", function () { readHash(); render(); });
   const t = store("rpgTheme");
   if (t) document.documentElement.setAttribute("data-theme", t);
   $("footNote").textContent = "Reads a published Google Sheet as CSV. Press / to search.";
+  wireShare();
   load(false);
 })();
 </script>
