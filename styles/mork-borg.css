@@ -1,0 +1,44 @@
+/* Mork Borg style: doomsday-zine black and acid yellow, with hot pink and
+   toxic green as the two secondary accents — high contrast, hard edges, no
+   gradients. Forced dark regardless of the OS setting, like styles/dark.css.
+   Selected via the style dropdown in the page header; see ../index.html for
+   how styles/*.css are loaded after the shared styles, so the rules below
+   can override them outright, not just supply custom-property values. */
+:root{
+  color-scheme: dark;
+  --bg:#080808; --bg-sunk:#000000; --panel:#101010; --panel-2:#1b1b1b;
+  --ink:#f2efe4; --ink-2:#a9a498; --ink-3:#6b675c;
+  --line:#242018; --line-2:#3d3627;
+  --accent:#f6f000; --accent-ink:#0a0a08; --accent-soft:#2b2900;
+  --ok:#8ee000; --ok-soft:#1c2400;
+  --shadow:0 1px 2px rgba(0,0,0,.6), 0 6px 20px rgba(0,0,0,.5);
+}
+
+/* Heavy, uppercase, acid-yellow title in place of the book-serif look. */
+.brand h1{
+  font-family: var(--sans);
+  font-weight: 900;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* A hard yellow rule instead of a soft grey hairline — the rest of the
+   chrome (cards, facets, table rules) stays a near-invisible dark olive via
+   --line/--line-2, so this and the pressed/active states are what carry
+   the color. */
+header.top{
+  border-bottom: 4px solid var(--accent);
+}
+
+/* Hot pink, not yellow, for the Type pill — a second voice besides the
+   acid accent and the toxic-green Played tag. */
+.tag.type{
+  background:#2a0e1c;
+  color:#ff2f92;
+}
+
+/* The cursor ignites the page on hover. */
+.card:hover{
+  border-color: var(--accent);
+}

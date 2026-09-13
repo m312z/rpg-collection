@@ -1,0 +1,41 @@
+/* OSE style: the Old-School Essentials look — a clean, high-contrast
+   modernist page instead of a moody dark UI. Cream paper, black rules,
+   crisp white cards, and the brand red (from necroticgnome.com's own site
+   theme, #e22120) as the sole accent, carried by a full red masthead
+   header. Forced light regardless of the OS setting, the same way the dark
+   styles are forced dark. Selected via the style dropdown in the page
+   header; see ../index.html for how styles/*.css are loaded after the
+   shared styles, so the rules below can override them outright, not just
+   supply custom-property values. */
+:root{
+  color-scheme: light;
+  --bg:#f3efe4; --bg-sunk:#e9e3d2; --bg-header:#e22120; --panel:#ffffff; --panel-2:#f6f3ea;
+  --ink:#141211; --ink-2:#3a3a38; --ink-3:#8a8580;
+  --line:#d6cdb4; --line-2:#171412;
+  --accent:#e22120; --accent-ink:#ffffff; --accent-soft:#f7dcdb;
+  --ok:#3f7d43; --ok-soft:#e2efe0;
+  --shadow:0 1px 2px rgba(20,15,10,.08), 0 4px 14px rgba(20,15,10,.06);
+}
+
+/* Bold white masthead lettering on the red banner, in place of --ink. */
+.brand h1{
+  color:#ffffff;
+  text-transform:uppercase;
+  font-weight:800;
+  letter-spacing:.03em;
+}
+.count{
+  color:rgba(255,255,255,.78);
+}
+
+/* A thick red rule under each section heading — the book's own device for
+   separating sections — instead of a thin grey hairline. */
+.group>h2{
+  border-bottom:3px solid var(--accent);
+  font-weight:800;
+}
+
+/* The cursor picks a card out in the brand red on hover. */
+.card:hover{
+  border-color:var(--accent);
+}

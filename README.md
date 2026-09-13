@@ -54,23 +54,27 @@ sends no CORS header to a null origin. The page detects that case and says so.
 - Faceted filters with live result counts that update against the other filters
 - Card and table views; sortable columns; grouping by any category or by decade
 - A detail panel for each entry
-- Switchable styles (`styles/*.css`) — Default follows the system light/dark
-  setting, Dark forces dark regardless of it
+- Switchable styles (`styles/*.css`) — currently OSE (default), Dark Sun and
+  Mork Borg, each a distinct palette rather than a light/dark toggle
 - Shareable URLs — search, filters, sort and grouping are all in the address
 - Works down to phone width
 
 ## Adding a style
 
-Each file in `styles/` is a self-contained palette: the same set of CSS
-custom properties (`--bg`, `--ink`, `--accent`, ...), just different values.
-The page links whichever one is selected in the style dropdown; nothing else
-about the layout lives in these files.
+Each file in `styles/` defines the same set of CSS custom properties
+(`--bg`, `--ink`, `--accent`, ...) with different values; the page links
+whichever one is selected in the style dropdown. A style can also override a
+selector outright — see `styles/dark-sun.css`'s gradient title or
+`styles/mork-borg.css`'s header rule — since the linked stylesheet loads
+after `index.html`'s own styles and wins ties in the cascade.
 
 To add one:
 
-1. Copy `styles/default.css` to `styles/yourname.css` and change the colors.
-2. Add `<option value="yourname">Your Name</option>` to `#styleSelect` and
-   `"yourname"` to the `STYLES` array, both in `index.html`.
+1. Copy an existing file in `styles/` to `styles/yourname.css` and change
+   the colors (and any of its rule overrides you don't want to keep).
+2. Add `<option value="yourname">Your Name</option>` to `#styleSelect`, and
+   add `"yourname"` to the `STYLES` array in the main script and the `known`
+   array in the small pre-paint script in `<head>` — both in `index.html`.
 
 The chosen style is remembered per browser (`localStorage`), the same way the
 sheet link is.
