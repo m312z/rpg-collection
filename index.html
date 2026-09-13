@@ -1,0 +1,1177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RPG Collection</title>
+<style>
+:root{
+  color-scheme: light dark;
+  --bg:#f7f4ee; --bg-sunk:#efeae0; --panel:#fffdf9; --panel-2:#f4f0e7;
+  --ink:#1f1b16; --ink-2:#5f574c; --ink-3:#8b8073;
+  --line:#ddd5c7; --line-2:#c9bfad;
+  --accent:#8c2f39; --accent-ink:#ffffff; --accent-soft:#f3e3e4;
+  --ok:#2f6b4f; --ok-soft:#e3efe7;
+  --shadow:0 1px 2px rgba(31,27,22,.06), 0 4px 14px rgba(31,27,22,.05);
+  --radius:10px;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16151a; --bg-sunk:#100f13; --panel:#1e1d24; --panel-2:#262530;
+    --ink:#ece7df; --ink-2:#b3aca1; --ink-3:#847d72;
+    --line:#302e39; --line-2:#413e4c;
+    --accent:#d96a74; --accent-ink:#1a1014; --accent-soft:#33222a;
+    --ok:#6fbf94; --ok-soft:#1d2c25;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16151a; --bg-sunk:#100f13; --panel:#1e1d24; --panel-2:#262530;
+  --ink:#ece7df; --ink-2:#b3aca1; --ink-3:#847d72;
+  --line:#302e39; --line-2:#413e4c;
+  --accent:#d96a74; --accent-ink:#1a1014; --accent-soft:#33222a;
+  --ok:#6fbf94; --ok-soft:#1d2c25;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);-webkit-text-size-adjust:100%}
+img{max-width:100%}
+[hidden]{display:none!important}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--accent)}
+
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px}
+header.top{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-block:10px}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand h1{font:600 19px/1.2 var(--serif);margin:0;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.count{font:500 12px/1 var(--mono);color:var(--ink-3);white-space:nowrap}
+.grow{flex:1 1 190px;min-width:0}
+
+.search{position:relative;display:flex;align-items:center}
+.search .mag{position:absolute;left:11px;color:var(--ink-3);pointer-events:none;font-size:13px;line-height:1}
+.search input{width:100%;padding:8px 30px 8px 30px;background:var(--panel);border:1px solid var(--line-2);border-radius:var(--radius);outline:none}
+.search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.search .clr{position:absolute;right:5px;border:0;background:none;color:var(--ink-3);cursor:pointer;padding:4px 6px;border-radius:6px;line-height:1;font-size:16px}
+.search .clr:hover{background:var(--panel-2);color:var(--ink)}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;background:var(--panel);color:var(--ink);border:1px solid var(--line-2);border-radius:var(--radius);cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--panel-2)}
+.btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.sm{padding:5px 9px;font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:none;padding:7px 11px;cursor:pointer;color:var(--ink-2)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+
+.status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 0 9px;font-size:12.5px;color:var(--ink-2)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ink-3);flex:none}
+.dot.live{background:var(--ok)}
+.dot.warn{background:#c98a2b}
+.dot.err{background:var(--accent)}
+
+.split{display:grid;grid-template-columns:246px 1fr;gap:22px;align-items:start;padding-block:4px 40px}
+@media (max-width:860px){.split{grid-template-columns:1fr;gap:0}}
+aside.facets{position:sticky;top:60px;max-height:calc(100vh - 76px);overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px 14px 14px;box-shadow:var(--shadow)}
+@media (max-width:860px){aside.facets{position:static;max-height:none;margin-bottom:16px}}
+.facet{border-top:1px solid var(--line);padding:11px 0 3px}
+.facet:first-child{border-top:0}
+.facet h3{margin:0 0 8px;font:600 11px/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);display:flex;align-items:center;justify-content:space-between;gap:6px}
+.facet h3 button{border:0;background:none;color:var(--accent);cursor:pointer;font:500 11px/1 var(--sans);padding:2px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);border-radius:999px;padding:4px 9px;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.chip:hover{color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip .n{font:11px/1 var(--mono);opacity:.65}
+select.fsel{width:100%;padding:7px 8px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:8px;outline:none}
+select.fsel:focus{border-color:var(--accent)}
+.range{display:flex;align-items:center;gap:7px}
+.range input{width:100%;min-width:0;padding:6px 7px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:8px;outline:none;font:13px/1.2 var(--mono)}
+.range span{color:var(--ink-3);font-size:12px}
+.tri{display:flex;gap:5px}
+.tri button{flex:1;justify-content:center}
+
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.toolbar label{font-size:12.5px;color:var(--ink-3)}
+.toolbar select{padding:6px 8px;background:var(--panel);border:1px solid var(--line-2);border-radius:8px;outline:none}
+.active-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--line-2);border-radius:999px;padding:3px 6px 3px 10px;font-size:12px}
+.pill b{font-weight:600}
+.pill button{border:0;background:none;color:inherit;cursor:pointer;font-size:15px;line-height:1;padding:0 3px;border-radius:50%}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;box-shadow:var(--shadow);cursor:pointer;display:flex;flex-direction:column;gap:7px;text-align:left;width:100%;font:inherit;color:inherit}
+.card:hover{border-color:var(--line-2)}
+.card .t{font:600 14.5px/1.3 var(--serif);color:var(--ink)}
+.card .meta{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.tag{font-size:11.5px;padding:2px 7px;border-radius:999px;background:var(--panel-2);color:var(--ink-2);border:1px solid var(--line);white-space:nowrap}
+.tag.yr{font-family:var(--mono);font-size:11px}
+.tag.played{background:var(--ok-soft);color:var(--ok);border-color:var(--line-2)}
+.tag.type{background:var(--accent-soft);color:var(--accent);border-color:var(--line-2)}
+.card .sys{font-size:12.5px;color:var(--ink-3)}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+table.list{width:100%;border-collapse:collapse;font-size:13.5px}
+table.list th{text-align:left;font:600 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding:10px 12px;border-bottom:1px solid var(--line);background:var(--panel);cursor:pointer;white-space:nowrap}
+table.list th:hover{color:var(--ink)}
+table.list td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.list tr:last-child td{border-bottom:0}
+table.list tbody tr{cursor:pointer}
+table.list tbody tr:hover{background:var(--panel-2)}
+table.list td.ttl{font-weight:600}
+table.list td.num{font-family:var(--mono);font-size:12.5px;color:var(--ink-2)}
+
+.group{margin-bottom:26px}
+.group>h2{font:600 13px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px;padding-bottom:7px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+.group>h2 span{font:11px/1 var(--mono);color:var(--ink-3)}
+
+.empty{text-align:center;padding:56px 20px;color:var(--ink-3);border:1px dashed var(--line-2);border-radius:12px;background:var(--panel)}
+.empty p{margin:0 0 4px}
+.empty .big{font:600 16px/1.3 var(--serif);color:var(--ink-2)}
+
+.notice{background:var(--panel);border:1px solid var(--line-2);border-left:3px solid var(--accent);border-radius:10px;padding:15px 17px;margin-block:14px;box-shadow:var(--shadow)}
+.notice h2{margin:0 0 8px;font:600 15px/1.3 var(--sans)}
+.notice p{margin:0 0 9px;color:var(--ink-2);font-size:13.5px}
+.notice ol{margin:0 0 6px;padding-left:20px;color:var(--ink-2);font-size:13.5px}
+.notice li{margin-bottom:5px}
+.notice code{font:12px/1.45 var(--mono);background:var(--bg-sunk);padding:2px 5px;border-radius:5px;word-break:break-all}
+.notice .urlrow{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.notice .urlrow input{flex:1 1 260px;min-width:0;padding:8px 10px;background:var(--bg-sunk);border:1px solid var(--line-2);border-radius:8px;font:12px/1.3 var(--mono);outline:none}
+.notice .urlrow input:focus{border-color:var(--accent)}
+
+.scrim{position:fixed;inset:0;background:rgba(10,8,6,.45);z-index:40;opacity:0;pointer-events:none;transition:opacity .16s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(440px,100%);z-index:41;background:var(--panel);border-left:1px solid var(--line-2);box-shadow:-8px 0 30px rgba(10,8,6,.22);transform:translateX(100%);transition:transform .18s ease;display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.drawer .dh{display:flex;align-items:flex-start;gap:10px;padding:16px 16px 12px;border-bottom:1px solid var(--line)}
+.drawer .dh h2{margin:0;font:600 17px/1.3 var(--serif);flex:1}
+.drawer .db{padding:14px 16px 28px;overflow-y:auto;flex:1}
+.drawer dl{margin:0;display:grid;grid-template-columns:112px 1fr;gap:1px 12px}
+.drawer dt{font:600 10.5px/1.7 var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);padding:7px 0;border-top:1px solid var(--line)}
+.drawer dd{margin:0;padding:7px 0;border-top:1px solid var(--line);word-break:break-word}
+.drawer .dd-empty{color:var(--ink-3)}
+.drawer img.cover{border-radius:8px;border:1px solid var(--line);margin-bottom:12px}
+
+footer.foot{border-top:1px solid var(--line);padding:16px 0 34px;color:var(--ink-3);font-size:12px}
+footer.foot a{color:var(--ink-2)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <div class="brand">
+      <h1 id="pageTitle">RPG Collection</h1>
+      <span class="count" id="countLabel"></span>
+    </div>
+    <div class="grow search">
+      <span class="mag" aria-hidden="true">&#9906;</span>
+      <input id="q" type="search" placeholder="Search title, system, family&hellip;" autocomplete="off" aria-label="Search collection">
+      <button class="clr" id="qClear" type="button" hidden aria-label="Clear search">&times;</button>
+    </div>
+    <div class="seg" role="group" aria-label="View mode">
+      <button id="vGrid" type="button" aria-pressed="true">Cards</button>
+      <button id="vTable" type="button" aria-pressed="false">Table</button>
+    </div>
+    <button class="btn" id="filtToggle" type="button" aria-expanded="true">Filters</button>
+    <button class="btn" id="refresh" type="button" title="Re-read the sheet">&#8635;</button>
+    <button class="btn" id="theme" type="button" title="Toggle light / dark">&#9682;</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="status">
+    <span class="dot" id="srcDot"></span>
+    <span id="srcText">Loading&hellip;</span>
+  </div>
+  <div id="notices"></div>
+</div>
+
+<main class="wrap split" id="split">
+  <aside class="facets" id="facets"></aside>
+  <section>
+    <div class="toolbar">
+      <label for="sort">Sort</label>
+      <select id="sort"></select>
+      <label for="group">Group</label>
+      <select id="group"></select>
+      <button class="btn sm" id="resetAll" type="button" hidden>Reset all</button>
+    </div>
+    <div class="active-pills" id="pills"></div>
+    <div id="results"></div>
+  </section>
+</main>
+
+<footer class="foot wrap">
+  <span id="footNote"></span>
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Entry details">
+  <div class="dh">
+    <h2 id="dTitle"></h2>
+    <button class="btn sm" id="dClose" type="button" aria-label="Close details">&times;</button>
+  </div>
+  <div class="db" id="dBody"></div>
+</aside>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   CONFIG
+   ---------------------------------------------------------------------
+   csvUrl: the published-CSV URL of your collection tab.
+
+   To get it: in Google Sheets open  File > Share > Publish to web,
+   pick the COLLECTION TAB in the left dropdown (not "Entire document" --
+   your sheet also holds a Kickstarter tab with pledge amounts), choose
+   "Comma-separated values (.csv)", press Publish, and copy the URL.
+
+   Paste it between the quotes below and the page is live and shareable.
+   You can also try a URL without editing this file by appending
+   ?csv=<url> or by using the input the page shows when csvUrl is blank.
+   ===================================================================== */
+const CONFIG = {
+  csvUrl: "",
+  fallbackUrl: "sample-data.csv",
+  titleColumn: "Title",
+  pageTitle: "RPG Collection"
+};
+
+/* ---------------- tiny helpers ---------------- */
+const $ = function (id) { return document.getElementById(id); };
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+function store(key, val) {
+  try {
+    if (val === undefined) return localStorage.getItem(key);
+    if (val === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, val);
+  } catch (e) { /* private mode / blocked storage */ }
+  return null;
+}
+function fold(s) {
+  return String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+function squash(s) { return fold(s).replace(/[^a-z0-9]+/g, ""); }
+
+/* ---------------- CSV (RFC 4180) ---------------- */
+function parseCSV(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const rows = [];
+  let row = [], field = "", i = 0, inQ = false;
+  while (i < text.length) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i += 2; continue; }
+        inQ = false; i++; continue;
+      }
+      field += c; i++; continue;
+    }
+    if (c === '"') { inQ = true; i++; continue; }
+    if (c === ",") { row.push(field); field = ""; i++; continue; }
+    if (c === "\r") { i++; continue; }
+    if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; i++; continue; }
+    field += c; i++;
+  }
+  if (field !== "" || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+/* ---------------- schema inference ----------------
+   Columns beyond Title get a type inferred from their values, so adding
+   a column in the sheet grows the UI with no code change:
+     bool   -> yes / no / any toggle
+     num    -> min-max range + a sort option
+     multi  -> comma-separated values become selectable tag chips
+     enum   -> chips (few values) or a dropdown (many)
+     text   -> searchable, shown in the detail drawer
+   -------------------------------------------------- */
+const TRUE_SET = new Set(["true", "yes", "y", "1", "x", "✓", "✔", "checked", "done"]);
+const FALSE_SET = new Set(["false", "no", "n", "0", "✗", "-"]);
+const TYPE_ORDER = ["Core Rules", "Starter Set", "Supplement", "Adventure Supplement", "Campaign", "Magazine"];
+
+function inferColumns(headers, rows, titleCol) {
+  const cols = [];
+  headers.forEach(function (name, idx) {
+    if (!name) return;
+    const raw = [];
+    for (let r = 0; r < rows.length; r++) {
+      const v = (rows[r][idx] || "").trim();
+      if (v !== "") raw.push(v);
+    }
+    const col = { name: name, idx: idx, kind: "text", values: [], min: null, max: null, filled: raw.length };
+    if (name === titleCol) { col.kind = "title"; cols.push(col); return; }
+    if (!raw.length) { col.kind = "empty"; cols.push(col); return; }
+
+    const lowered = raw.map(function (v) { return v.toLowerCase(); });
+    const distinct = Array.from(new Set(raw));
+    const allNumeric = raw.every(function (v) { return /^-?\d+(\.\d+)?$/.test(v.replace(/,/g, "")); });
+    const allBoolish = lowered.every(function (v) { return TRUE_SET.has(v) || FALSE_SET.has(v); });
+
+    if (allBoolish && distinct.length <= 3) {
+      col.kind = "bool";
+    } else if (allNumeric) {
+      const nums = raw.map(function (v) { return parseFloat(v.replace(/,/g, "")); });
+      col.kind = "num";
+      col.min = Math.min.apply(null, nums);
+      col.max = Math.max.apply(null, nums);
+    } else {
+      const commaShare = raw.filter(function (v) { return v.indexOf(",") > -1; }).length / raw.length;
+      const urlShare = raw.filter(function (v) { return /^https?:\/\//i.test(v); }).length / raw.length;
+      const maxLen = Math.max.apply(null, raw.map(function (v) { return v.length; }));
+      // A column of links (cover images, RPGGeek pages) is never a facet.
+      if (urlShare > 0.6) {
+        col.kind = "url";
+      } else if (commaShare > 0.25 && maxLen <= 120) {
+        col.kind = "multi";
+        const toks = new Set();
+        raw.forEach(function (v) {
+          v.split(",").forEach(function (t) { t = t.trim(); if (t) toks.add(t); });
+        });
+        col.values = Array.from(toks).sort(collate);
+      } else {
+        // Category or prose? Categories are short label-like phrases that
+        // repeat ("Core Rules", "Old-School Essentials"); a Notes or Review
+        // column is sentences. Word count separates them far more reliably
+        // than cardinality does, so it leads — with a repetition check as a
+        // backstop once there is enough data to measure repetition at all.
+        const maxWords = Math.max.apply(null, raw.map(function (v) { return v.split(/\s+/).length; }));
+        const labelLike = maxWords <= 6 && maxLen <= 60 && distinct.length <= 220;
+        const repeats = raw.length < 8 || distinct.length <= raw.length * 0.75;
+        if (labelLike && repeats) {
+          col.kind = "enum";
+          col.values = distinct.sort(collate);
+        } else {
+          col.kind = "text";
+        }
+      }
+    }
+    cols.push(col);
+  });
+  return cols;
+}
+function isFacetable(col) {
+  return col.kind === "bool" || col.kind === "num" || col.kind === "multi" || col.kind === "enum";
+}
+function collate(a, b) { return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" }); }
+function isTrue(v) { return TRUE_SET.has(String(v).trim().toLowerCase()); }
+function numOf(v) {
+  const n = parseFloat(String(v).replace(/,/g, ""));
+  return isFinite(n) ? n : null;
+}
+
+/* ---------------- state ---------------- */
+const DATA = { cols: [], rows: [], titleCol: CONFIG.titleColumn, fetchedAt: null, source: null };
+const S = { q: "", filters: {}, sort: "title-asc", group: "none", view: "grid", facetsOpen: true };
+
+/* ---------------- load ---------------- */
+function resolveUrl() {
+  const params = new URLSearchParams(location.search);
+  const fromQuery = params.get("csv");
+  if (fromQuery) return { url: fromQuery, origin: "query string" };
+  if (CONFIG.csvUrl) return { url: CONFIG.csvUrl, origin: "config" };
+  const saved = store("rpgCsvUrl");
+  if (saved) return { url: saved, origin: "saved in this browser" };
+  return { url: CONFIG.fallbackUrl, origin: "local sample file" };
+}
+
+function setStatus(kind, text) {
+  $("srcDot").className = "dot " + kind;
+  $("srcText").textContent = text;
+}
+
+async function load(bustCache) {
+  const target = resolveUrl();
+  DATA.source = target;
+  setStatus("", "Reading sheet…");
+  let url = target.url;
+  if (bustCache) url += (url.indexOf("?") > -1 ? "&" : "?") + "_=" + Date.now();
+  let res;
+  try {
+    res = await fetch(url, { cache: bustCache ? "no-store" : "default", redirect: "follow" });
+  } catch (err) {
+    fail("network", target, String(err && err.message ? err.message : err));
+    return;
+  }
+  if (!res.ok) { fail("http", target, "HTTP " + res.status + " " + res.statusText); return; }
+  const text = await res.text();
+  if (/^\s*<(!doctype|html)/i.test(text)) { fail("html", target, "Got an HTML page, not CSV."); return; }
+
+  const table = parseCSV(text);
+  if (!table.length) { fail("empty", target, "The file parsed to zero rows."); return; }
+  build(table, target);
+}
+
+function build(table, target) {
+  // Find the header row: the first row containing the title column.
+  let headerRow = 0;
+  for (let r = 0; r < Math.min(table.length, 8); r++) {
+    if (table[r].some(function (c) { return (c || "").trim() === CONFIG.titleColumn; })) { headerRow = r; break; }
+  }
+  const headers = table[headerRow].map(function (h) { return (h || "").trim(); });
+  const titleIdx = headers.indexOf(CONFIG.titleColumn);
+  if (titleIdx === -1) {
+    fail("schema", target, "No “" + CONFIG.titleColumn + "” column. Found: " +
+      headers.filter(Boolean).join(", "));
+    return;
+  }
+  const body = table.slice(headerRow + 1).filter(function (r) {
+    return (r[titleIdx] || "").trim() !== "";
+  });
+  DATA.cols = inferColumns(headers, body, CONFIG.titleColumn);
+  DATA.rows = body.map(function (r, i) {
+    const rec = { _i: i, _blob: "", _squash: "" };
+    DATA.cols.forEach(function (c) { rec[c.name] = (r[c.idx] || "").trim(); });
+    const parts = [];
+    DATA.cols.forEach(function (c) {
+      if (c.kind === "title" || c.kind === "enum" || c.kind === "multi" || c.kind === "text") {
+        if (rec[c.name]) parts.push(rec[c.name]);
+      }
+    });
+    rec._blob = fold(parts.join(" · "));
+    rec._squash = squash(parts.join(" "));
+    return rec;
+  });
+  DATA.fetchedAt = new Date();
+  $("notices").innerHTML = "";
+  const n = DATA.rows.length;
+  const live = target.origin !== "local sample file";
+  setStatus(live ? "live" : "warn",
+    (live ? "Live from your sheet" : "Showing the bundled sample file") +
+    " · " + n + " entries · read " + DATA.fetchedAt.toLocaleTimeString());
+  if (!live) sampleNotice();
+  buildControls();
+  readHash();
+  render();
+}
+
+function fail(kind, target, detail) {
+  setStatus("err", "Could not read the sheet");
+  const box = el("div", "notice");
+  const usingSample = target.origin === "local sample file";
+
+  // By far the most common cause: the page was opened straight off disk.
+  // A file:// page sends "Origin: null", and Google returns no CORS header
+  // for that, so the browser blocks the response before the page sees it.
+  // Nothing about the sheet or the URL is wrong — say so, precisely.
+  if (location.protocol === "file:") {
+    box.appendChild(el("h2", null, "Open this over http, not from the file system"));
+    box.appendChild(el("p", null,
+      "The page is loaded from a file:// address. Google will not serve the CSV to a page " +
+      "opened directly from disk, so the browser blocks the request. Your sheet and the URL " +
+      "are almost certainly fine — this is the address bar, not the data."));
+    const ol2 = el("ol");
+    const li1 = el("li");
+    li1.appendChild(document.createTextNode("Run a local server from this folder: "));
+    li1.appendChild(el("code", null, "python -m http.server 8777"));
+    ol2.appendChild(li1);
+    const li2 = el("li");
+    li2.appendChild(document.createTextNode("Then open "));
+    li2.appendChild(el("code", null, "http://127.0.0.1:8777/index.html"));
+    ol2.appendChild(li2);
+    ol2.appendChild(el("li", null,
+      "To use it from your phone or share it, host the folder on GitHub Pages, Netlify or Cloudflare Pages."));
+    box.appendChild(ol2);
+    $("notices").innerHTML = "";
+    $("notices").appendChild(box);
+    DATA.rows = []; DATA.cols = [];
+    render();
+    return;
+  }
+
+  box.appendChild(el("h2", null, usingSample ? "No sheet connected yet" : "Could not read the sheet"));
+
+  if (kind === "network" && !usingSample) {
+    box.appendChild(el("p", null,
+      "The browser could not fetch that URL. The usual cause is that the tab is not published to the web — " +
+      "a normal Sheets link will not work here, it has to be a Publish-to-web CSV link."));
+  } else if (kind === "http") {
+    box.appendChild(el("p", null, detail + ". If this is 401 or 404, the tab is not published to the web."));
+  } else if (kind === "html") {
+    box.appendChild(el("p", null,
+      "That URL returned a web page instead of CSV — it looks like a normal Sheets edit link. " +
+      "Use Publish to web and pick “Comma-separated values (.csv)”."));
+  } else if (kind === "schema") {
+    box.appendChild(el("p", null, detail));
+  } else {
+    box.appendChild(el("p", null, detail || ""));
+  }
+
+  const ol = el("ol");
+  [
+    "In Google Sheets: File › Share › Publish to web.",
+    "In the left dropdown pick your collection tab — not “Entire document”. Your sheet also has a Kickstarter tab with pledge amounts, and publishing everything would expose it.",
+    "In the right dropdown pick “Comma-separated values (.csv)”, then press Publish.",
+    "Copy the link it gives you and paste it below."
+  ].forEach(function (t) { ol.appendChild(el("li", null, t)); });
+  box.appendChild(ol);
+
+  const row = el("div", "urlrow");
+  const inp = el("input");
+  inp.type = "url";
+  inp.placeholder = "https://docs.google.com/spreadsheets/d/e/…/pub?gid=…&single=true&output=csv";
+  inp.value = (target.origin === "local sample file" ? "" : target.url);
+  const go = el("button", "btn", "Load");
+  go.type = "button";
+  go.onclick = function () {
+    const v = inp.value.trim();
+    if (!v) return;
+    store("rpgCsvUrl", v);
+    load(true);
+  };
+  inp.onkeydown = function (e) { if (e.key === "Enter") go.click(); };
+  row.appendChild(inp); row.appendChild(go);
+  box.appendChild(row);
+
+  const p = el("p");
+  p.style.margin = "10px 0 0";
+  p.style.fontSize = "12.5px";
+  p.appendChild(document.createTextNode("The URL is remembered in this browser. To share the page with the sheet " +
+    "already wired up, paste it into "));
+  p.appendChild(el("code", null, "CONFIG.csvUrl"));
+  p.appendChild(document.createTextNode(" near the top of index.html instead."));
+  box.appendChild(p);
+
+  $("notices").innerHTML = "";
+  $("notices").appendChild(box);
+
+  if (usingSample) { load_sampleFallback(); } else { DATA.rows = []; render(); }
+}
+
+function load_sampleFallback() {
+  // Nothing to show and no sheet configured: leave the results area empty.
+  DATA.rows = []; DATA.cols = [];
+  $("facets").innerHTML = "";
+  $("results").innerHTML = "";
+  $("countLabel").textContent = "";
+}
+
+function sampleNotice() {
+  const box = el("div", "notice");
+  box.appendChild(el("h2", null, "This is the bundled sample, not your collection"));
+  const p = el("p");
+  p.appendChild(document.createTextNode("Paste your published-CSV link below to load your own collection. " +
+    "It is remembered in this browser, so you only do this once here."));
+  box.appendChild(p);
+  const p2 = el("p");
+  p2.appendChild(document.createTextNode("To share the page, or open it on another device, put the link in the " +
+    "address instead — add "));
+  p2.appendChild(el("code", null, "?csv=<your link>"));
+  p2.appendChild(document.createTextNode(" to this page's URL and bookmark that. Anyone you send it to sees your collection."));
+  box.appendChild(p2);
+  const row = el("div", "urlrow");
+  const inp = el("input");
+  inp.type = "url";
+  inp.placeholder = "https://docs.google.com/spreadsheets/d/e/…/pub?output=csv";
+  const go = el("button", "btn", "Load");
+  go.type = "button";
+  go.onclick = function () { const v = inp.value.trim(); if (v) { store("rpgCsvUrl", v); load(true); } };
+  inp.onkeydown = function (e) { if (e.key === "Enter") go.click(); };
+  row.appendChild(inp); row.appendChild(go);
+  box.appendChild(row);
+  $("notices").appendChild(box);
+}
+
+/* ---------------- filtering ---------------- */
+function activeFilterCount() {
+  let n = 0;
+  Object.keys(S.filters).forEach(function (k) {
+    const f = S.filters[k];
+    if (f == null) return;
+    if (Array.isArray(f)) { if (f.length) n++; }
+    else if (typeof f === "object") { if (f.min != null || f.max != null) n++; }
+    else if (f !== "" && f !== "any") n++;
+  });
+  return n;
+}
+
+function matches(rec) {
+  if (S.q) {
+    const qf = fold(S.q), qs = squash(S.q);
+    const toks = qf.split(/\s+/).filter(Boolean);
+    const ok = toks.every(function (t) { return rec._blob.indexOf(t) > -1; });
+    if (!ok && !(qs && rec._squash.indexOf(qs) > -1)) return false;
+  }
+  for (const name in S.filters) {
+    const f = S.filters[name];
+    if (f == null) continue;
+    const col = DATA.cols.find(function (c) { return c.name === name; });
+    if (!col) continue;
+    const v = rec[name] || "";
+    if (col.kind === "bool") {
+      if (f === "yes" && !isTrue(v)) return false;
+      if (f === "no" && isTrue(v)) return false;
+    } else if (col.kind === "num") {
+      if (f.min != null || f.max != null) {
+        const n = numOf(v);
+        if (n == null) return false;
+        if (f.min != null && n < f.min) return false;
+        if (f.max != null && n > f.max) return false;
+      }
+    } else if (col.kind === "multi") {
+      if (Array.isArray(f) && f.length) {
+        const mine = v.split(",").map(function (t) { return t.trim(); }).filter(Boolean);
+        if (!f.some(function (want) { return mine.indexOf(want) > -1; })) return false;
+      }
+    } else if (col.kind === "enum") {
+      if (Array.isArray(f)) { if (f.length && f.indexOf(v) === -1) return false; }
+      else if (f && f !== "any") { if (v !== f) return false; }
+    }
+  }
+  return true;
+}
+
+function sortRows(rows) {
+  const parts = S.sort.split("-");
+  const dir = parts.pop() === "desc" ? -1 : 1;
+  const key = parts.join("-");
+  const col = DATA.cols.find(function (c) { return c.name === key; });
+  const out = rows.slice();
+  if (key === "title") {
+    out.sort(function (a, b) { return collate(a[DATA.titleCol], b[DATA.titleCol]) * dir; });
+  } else if (col && col.kind === "num") {
+    out.sort(function (a, b) {
+      const x = numOf(a[key]), y = numOf(b[key]);
+      if (x == null && y == null) return collate(a[DATA.titleCol], b[DATA.titleCol]);
+      if (x == null) return 1;
+      if (y == null) return -1;
+      if (x === y) return collate(a[DATA.titleCol], b[DATA.titleCol]);
+      return (x - y) * dir;
+    });
+  } else if (col && col.name === "Type") {
+    out.sort(function (a, b) {
+      const x = TYPE_ORDER.indexOf(a.Type), y = TYPE_ORDER.indexOf(b.Type);
+      const xi = x === -1 ? 99 : x, yi = y === -1 ? 99 : y;
+      if (xi === yi) return collate(a[DATA.titleCol], b[DATA.titleCol]);
+      return (xi - yi) * dir;
+    });
+  } else if (col) {
+    out.sort(function (a, b) {
+      const c = collate(a[key] || "￿", b[key] || "￿") * dir;
+      return c !== 0 ? c : collate(a[DATA.titleCol], b[DATA.titleCol]);
+    });
+  }
+  return out;
+}
+
+/* ---------------- controls ---------------- */
+function buildControls() {
+  $("pageTitle").textContent = CONFIG.pageTitle;
+
+  const sort = $("sort");
+  sort.innerHTML = "";
+  const opts = [["title-asc", "Title A–Z"], ["title-desc", "Title Z–A"]];
+  DATA.cols.forEach(function (c) {
+    if (c.kind === "num") { opts.push([c.name + "-desc", c.name + " (newest / highest)"]); opts.push([c.name + "-asc", c.name + " (oldest / lowest)"]); }
+    else if (c.kind === "enum") { opts.push([c.name + "-asc", c.name]); }
+  });
+  opts.forEach(function (o) { const n = el("option", null, o[1]); n.value = o[0]; sort.appendChild(n); });
+  sort.value = S.sort;
+  sort.onchange = function () { S.sort = sort.value; writeHash(); render(); };
+
+  const group = $("group");
+  group.innerHTML = "";
+  const gopts = [["none", "No grouping"]];
+  DATA.cols.forEach(function (c) {
+    if ((c.kind === "enum" && c.values.length <= 220) || c.kind === "bool") gopts.push([c.name, "By " + c.name]);
+    if (c.kind === "num" && c.name.toLowerCase() === "year") gopts.push(["__decade", "By decade"]);
+  });
+  gopts.forEach(function (o) { const n = el("option", null, o[1]); n.value = o[0]; group.appendChild(n); });
+  group.value = S.group;
+  group.onchange = function () { S.group = group.value; writeHash(); render(); };
+
+  buildFacets();
+}
+
+function buildFacets() {
+  const host = $("facets");
+  host.innerHTML = "";
+  DATA.cols.forEach(function (col) {
+    if (!isFacetable(col)) return;
+    const box = el("div", "facet");
+    box._col = col;
+    const h = el("h3");
+    h.appendChild(el("span", null, col.name));
+    const clear = el("button", null, "clear");
+    clear.type = "button";
+    clear.hidden = true;
+    clear.onclick = function () { delete S.filters[col.name]; writeHash(); render(); };
+    h.appendChild(clear);
+    box.appendChild(h);
+    box._clear = clear;
+
+    if (col.kind === "bool") {
+      const tri = el("div", "tri");
+      [["any", "Any"], ["yes", "Yes"], ["no", "No"]].forEach(function (o) {
+        const b = el("button", "chip", o[1]);
+        b.type = "button";
+        b.dataset.val = o[0];
+        b.onclick = function () {
+          S.filters[col.name] = o[0] === "any" ? null : o[0];
+          if (!S.filters[col.name]) delete S.filters[col.name];
+          writeHash(); render();
+        };
+        tri.appendChild(b);
+      });
+      box.appendChild(tri);
+      box._sync = function () {
+        const cur = S.filters[col.name] || "any";
+        Array.prototype.forEach.call(tri.children, function (b) {
+          b.setAttribute("aria-pressed", String(b.dataset.val === cur));
+        });
+        clear.hidden = cur === "any";
+      };
+    } else if (col.kind === "num") {
+      const r = el("div", "range");
+      const lo = el("input"), hi = el("input");
+      lo.type = hi.type = "number";
+      lo.placeholder = String(col.min); hi.placeholder = String(col.max);
+      lo.setAttribute("aria-label", col.name + " minimum");
+      hi.setAttribute("aria-label", col.name + " maximum");
+      function push() {
+        const f = { min: lo.value === "" ? null : Number(lo.value), max: hi.value === "" ? null : Number(hi.value) };
+        if (f.min == null && f.max == null) delete S.filters[col.name];
+        else S.filters[col.name] = f;
+        writeHash(); render();
+      }
+      lo.onchange = hi.onchange = push;
+      r.appendChild(lo); r.appendChild(el("span", null, "–")); r.appendChild(hi);
+      box.appendChild(r);
+      box._sync = function () {
+        const f = S.filters[col.name];
+        lo.value = f && f.min != null ? f.min : "";
+        hi.value = f && f.max != null ? f.max : "";
+        clear.hidden = !f;
+      };
+    } else if (col.kind === "multi" || (col.kind === "enum" && col.values.length <= 14)) {
+      const chips = el("div", "chips");
+      col.values.forEach(function (v) {
+        const b = el("button", "chip");
+        b.type = "button";
+        b.appendChild(el("span", null, v));
+        const n = el("span", "n");
+        b.appendChild(n);
+        b.dataset.val = v;
+        b._n = n;
+        b.onclick = function () {
+          const cur = Array.isArray(S.filters[col.name]) ? S.filters[col.name].slice() : [];
+          const at = cur.indexOf(v);
+          if (at > -1) cur.splice(at, 1); else cur.push(v);
+          if (cur.length) S.filters[col.name] = cur; else delete S.filters[col.name];
+          writeHash(); render();
+        };
+        chips.appendChild(b);
+      });
+      box.appendChild(chips);
+      box._sync = function (counts) {
+        const cur = Array.isArray(S.filters[col.name]) ? S.filters[col.name] : [];
+        Array.prototype.forEach.call(chips.children, function (b) {
+          b.setAttribute("aria-pressed", String(cur.indexOf(b.dataset.val) > -1));
+          const c = counts && counts[b.dataset.val];
+          b._n.textContent = c == null ? "" : String(c);
+        });
+        clear.hidden = !cur.length;
+      };
+    } else {
+      const sel = el("select", "fsel");
+      sel.setAttribute("aria-label", "Filter by " + col.name);
+      const any = el("option", null, "Any " + col.name);
+      any.value = "";
+      sel.appendChild(any);
+      col.values.forEach(function (v) { const o = el("option", null, v); o.value = v; sel.appendChild(o); });
+      sel.onchange = function () {
+        if (sel.value) S.filters[col.name] = sel.value; else delete S.filters[col.name];
+        writeHash(); render();
+      };
+      box.appendChild(sel);
+      box._sync = function (counts) {
+        const f = S.filters[col.name];
+        sel.value = typeof f === "string" ? f : "";
+        clear.hidden = !f;
+        Array.prototype.forEach.call(sel.options, function (o) {
+          if (!o.value) return;
+          const c = counts && counts[o.value];
+          o.textContent = o.value + (c == null ? "" : "  (" + c + ")");
+        });
+      };
+    }
+    host.appendChild(box);
+  });
+}
+
+/* Counts for one facet = rows passing every OTHER active filter. */
+function facetCounts(col) {
+  const saved = S.filters[col.name];
+  delete S.filters[col.name];
+  const counts = {};
+  DATA.rows.forEach(function (rec) {
+    if (!matches(rec)) return;
+    const v = rec[col.name] || "";
+    if (col.kind === "multi") {
+      v.split(",").forEach(function (t) { t = t.trim(); if (t) counts[t] = (counts[t] || 0) + 1; });
+    } else if (v) {
+      counts[v] = (counts[v] || 0) + 1;
+    }
+  });
+  if (saved !== undefined) S.filters[col.name] = saved;
+  return counts;
+}
+
+/* ---------------- render ---------------- */
+function render() {
+  const shown = sortRows(DATA.rows.filter(matches));
+  const total = DATA.rows.length;
+
+  $("countLabel").textContent = total
+    ? (shown.length === total ? total + " entries" : shown.length + " of " + total)
+    : "";
+
+  // facet chip counts + control sync
+  Array.prototype.forEach.call($("facets").children, function (box) {
+    const col = box._col;
+    if (col && box._sync) {
+      box._sync(col.kind === "multi" || col.kind === "enum" ? facetCounts(col) : null);
+    }
+  });
+
+  renderPills();
+  $("resetAll").hidden = !(S.q || activeFilterCount());
+
+  const host = $("results");
+  host.innerHTML = "";
+  // With no data at all, the notice panel is the whole message — don't
+  // surround it with empty search, sort and filter chrome.
+  const hasData = total > 0;
+  document.querySelector(".toolbar").hidden = !hasData;
+  $("facets").hidden = !hasData || !S.facetsOpen;
+  document.querySelector(".search").hidden = !hasData;
+  $("filtToggle").hidden = !hasData;
+  $("vGrid").parentNode.hidden = !hasData;
+  if (!hasData) return;
+  if (!shown.length) {
+    const e = el("div", "empty");
+    e.appendChild(el("p", "big", "Nothing matches"));
+    e.appendChild(el("p", null, "Loosen a filter or clear the search."));
+    host.appendChild(e);
+    return;
+  }
+
+  if (S.group === "none") {
+    host.appendChild(S.view === "table" ? tableOf(shown) : gridOf(shown));
+    return;
+  }
+  const buckets = new Map();
+  shown.forEach(function (rec) {
+    let k;
+    if (S.group === "__decade") {
+      const y = numOf(rec.Year);
+      k = y == null ? "Unknown" : (Math.floor(y / 10) * 10) + "s";
+    } else {
+      k = rec[S.group] || "—";
+      const col = DATA.cols.find(function (c) { return c.name === S.group; });
+      if (col && col.kind === "bool") k = isTrue(k) ? "Yes" : "No";
+    }
+    if (!buckets.has(k)) buckets.set(k, []);
+    buckets.get(k).push(rec);
+  });
+  // Group headings follow the sort direction when you are sorting by the
+  // same thing you are grouping by, so "newest first" reads newest-first.
+  const sortKey = S.sort.slice(0, S.sort.lastIndexOf("-"));
+  const sortDesc = /-desc$/.test(S.sort);
+  const alignedWithSort = sortKey === S.group ||
+    (S.group === "__decade" && sortKey.toLowerCase() === "year");
+  const dir = (alignedWithSort && sortDesc) ? -1 : 1;
+  const keys = Array.from(buckets.keys()).sort(function (a, b) {
+    if (a === "—" || a === "Unknown") return 1;
+    if (b === "—" || b === "Unknown") return -1;
+    return collate(a, b) * dir;
+  });
+  keys.forEach(function (k) {
+    const g = el("div", "group");
+    const h = el("h2");
+    h.appendChild(el("span", null, k));
+    h.appendChild(el("span", null, String(buckets.get(k).length)));
+    g.appendChild(h);
+    g.appendChild(S.view === "table" ? tableOf(buckets.get(k)) : gridOf(buckets.get(k)));
+    host.appendChild(g);
+  });
+}
+
+function renderPills() {
+  const host = $("pills");
+  host.innerHTML = "";
+  function pill(label, value, onX) {
+    const p = el("span", "pill");
+    p.appendChild(el("b", null, label));
+    p.appendChild(document.createTextNode(value));
+    const x = el("button", null, "×");
+    x.type = "button";
+    x.setAttribute("aria-label", "Remove filter " + label + " " + value);
+    x.onclick = onX;
+    p.appendChild(x);
+    host.appendChild(p);
+  }
+  if (S.q) pill("search", S.q, function () { S.q = ""; $("q").value = ""; writeHash(); render(); });
+  Object.keys(S.filters).forEach(function (name) {
+    const f = S.filters[name];
+    if (f == null) return;
+    if (Array.isArray(f)) {
+      f.forEach(function (v) {
+        pill(name, v, function () {
+          const cur = S.filters[name].filter(function (x) { return x !== v; });
+          if (cur.length) S.filters[name] = cur; else delete S.filters[name];
+          writeHash(); render();
+        });
+      });
+    } else if (typeof f === "object") {
+      const txt = (f.min != null ? f.min : "…") + "–" + (f.max != null ? f.max : "…");
+      pill(name, txt, function () { delete S.filters[name]; writeHash(); render(); });
+    } else {
+      pill(name, f, function () { delete S.filters[name]; writeHash(); render(); });
+    }
+  });
+}
+
+function gridOf(rows) {
+  const g = el("div", "grid");
+  const typeCol = DATA.cols.find(function (c) { return c.name === "Type"; });
+  const yearCol = DATA.cols.find(function (c) { return c.kind === "num" && c.name.toLowerCase() === "year"; });
+  const sysCol = DATA.cols.find(function (c) { return c.name === "System"; });
+  const famCol = DATA.cols.find(function (c) { return c.name === "Family"; });
+  const boolCols = DATA.cols.filter(function (c) { return c.kind === "bool"; });
+
+  rows.forEach(function (rec) {
+    const c = el("button", "card");
+    c.type = "button";
+    c.appendChild(el("div", "t", rec[DATA.titleCol]));
+    const sub = [];
+    if (sysCol && rec.System) sub.push(rec.System);
+    if (famCol && rec.Family && rec.Family !== rec.System) sub.push(rec.Family);
+    if (sub.length) c.appendChild(el("div", "sys", sub.join(" · ")));
+    const meta = el("div", "meta");
+    if (typeCol && rec.Type) meta.appendChild(el("span", "tag type", rec.Type));
+    if (yearCol && rec[yearCol.name]) meta.appendChild(el("span", "tag yr", rec[yearCol.name]));
+    boolCols.forEach(function (bc) {
+      if (isTrue(rec[bc.name])) meta.appendChild(el("span", "tag played", bc.name));
+    });
+    if (meta.children.length) c.appendChild(meta);
+    c.onclick = function () { openDetail(rec); };
+    g.appendChild(c);
+  });
+  return g;
+}
+
+function tableOf(rows) {
+  const cols = DATA.cols.filter(function (c) {
+    return c.kind === "title" || c.kind === "enum" || c.kind === "num" || c.kind === "bool" || c.kind === "multi";
+  });
+  const wrap = el("div", "tablewrap");
+  const t = el("table", "list");
+  const thead = el("thead");
+  const tr = el("tr");
+  cols.forEach(function (c) {
+    const th = el("th", null, c.name);
+    th.onclick = function () {
+      const key = c.kind === "title" ? "title" : c.name;
+      if (c.kind === "bool" || c.kind === "multi") return;
+      S.sort = (S.sort === key + "-asc") ? key + "-desc" : key + "-asc";
+      const sel = $("sort");
+      if (Array.prototype.some.call(sel.options, function (o) { return o.value === S.sort; })) sel.value = S.sort;
+      writeHash(); render();
+    };
+    tr.appendChild(th);
+  });
+  thead.appendChild(tr);
+  t.appendChild(thead);
+  const tb = el("tbody");
+  rows.forEach(function (rec) {
+    const r = el("tr");
+    cols.forEach(function (c) {
+      let v = rec[c.name] || "";
+      if (c.kind === "bool") v = isTrue(v) ? "✓" : "";
+      const td = el("td", c.kind === "title" ? "ttl" : (c.kind === "num" || c.kind === "bool" ? "num" : null), v);
+      r.appendChild(td);
+    });
+    r.onclick = function () { openDetail(rec); };
+    tb.appendChild(r);
+  });
+  t.appendChild(tb);
+  wrap.appendChild(t);
+  return wrap;
+}
+
+/* ---------------- detail drawer ---------------- */
+function openDetail(rec) {
+  $("dTitle").textContent = rec[DATA.titleCol];
+  const body = $("dBody");
+  body.innerHTML = "";
+
+  // Any column holding an image URL renders as a cover image.
+  DATA.cols.forEach(function (c) {
+    const v = rec[c.name];
+    if (v && /^https?:\/\/\S+\.(png|jpe?g|gif|webp|avif)(\?\S*)?$/i.test(v)) {
+      const img = el("img", "cover");
+      img.src = v;
+      img.alt = rec[DATA.titleCol];
+      img.loading = "lazy";
+      body.appendChild(img);
+    }
+  });
+
+  const dl = el("dl");
+  DATA.cols.forEach(function (c) {
+    if (c.kind === "title" || c.kind === "empty") return;
+    const v = rec[c.name];
+    dl.appendChild(el("dt", null, c.name));
+    const dd = el("dd", v ? null : "dd-empty");
+    if (!v) {
+      dd.textContent = "—";
+    } else if (/^https?:\/\//i.test(v)) {
+      const a = el("a", null, v);
+      a.href = v; a.target = "_blank"; a.rel = "noopener noreferrer";
+      dd.appendChild(a);
+    } else if (c.kind === "bool") {
+      dd.textContent = isTrue(v) ? "Yes" : "No";
+    } else if (c.kind === "multi") {
+      const box = el("div", "meta");
+      v.split(",").forEach(function (tk) {
+        tk = tk.trim();
+        if (tk) box.appendChild(el("span", "tag", tk));
+      });
+      dd.appendChild(box);
+    } else {
+      dd.textContent = v;
+    }
+    dl.appendChild(dd);
+  });
+  body.appendChild(dl);
+
+  $("drawer").classList.add("on");
+  $("drawer").setAttribute("aria-hidden", "false");
+  $("scrim").classList.add("on");
+  $("dClose").focus();
+}
+function closeDetail() {
+  $("drawer").classList.remove("on");
+  $("drawer").setAttribute("aria-hidden", "true");
+  $("scrim").classList.remove("on");
+}
+
+/* ---------------- shareable URL state ---------------- */
+let hashLock = false;
+function writeHash() {
+  if (hashLock) return;
+  const p = new URLSearchParams();
+  if (S.q) p.set("q", S.q);
+  if (S.sort !== "title-asc") p.set("sort", S.sort);
+  if (S.group !== "none") p.set("group", S.group);
+  if (S.view !== "grid") p.set("view", S.view);
+  Object.keys(S.filters).forEach(function (name) {
+    const f = S.filters[name];
+    if (f == null) return;
+    if (Array.isArray(f)) p.set("f." + name, f.join("|"));
+    else if (typeof f === "object") p.set("f." + name, (f.min != null ? f.min : "") + ".." + (f.max != null ? f.max : ""));
+    else p.set("f." + name, f);
+  });
+  const s = p.toString();
+  history.replaceState(null, "", s ? "#" + s : location.pathname + location.search);
+}
+function readHash() {
+  const raw = location.hash.replace(/^#/, "");
+  if (!raw) return;
+  hashLock = true;
+  const p = new URLSearchParams(raw);
+  S.q = p.get("q") || "";
+  $("q").value = S.q;
+  $("qClear").hidden = !S.q;
+  if (p.get("sort")) S.sort = p.get("sort");
+  if (p.get("group")) S.group = p.get("group");
+  if (p.get("view")) S.view = p.get("view");
+  S.filters = {};
+  p.forEach(function (val, key) {
+    if (key.indexOf("f.") !== 0) return;
+    const name = key.slice(2);
+    const col = DATA.cols.find(function (c) { return c.name === name; });
+    if (!col) return;
+    if (col.kind === "num" && val.indexOf("..") > -1) {
+      const bits = val.split("..");
+      S.filters[name] = { min: bits[0] === "" ? null : Number(bits[0]), max: bits[1] === "" ? null : Number(bits[1]) };
+    } else if (col.kind === "multi" || (col.kind === "enum" && col.values.length <= 14)) {
+      S.filters[name] = val.split("|").filter(Boolean);
+    } else {
+      S.filters[name] = val;
+    }
+  });
+  const sel = $("sort");
+  if (Array.prototype.some.call(sel.options, function (o) { return o.value === S.sort; })) sel.value = S.sort;
+  else S.sort = "title-asc";
+  const gsel = $("group");
+  if (Array.prototype.some.call(gsel.options, function (o) { return o.value === S.group; })) gsel.value = S.group;
+  else S.group = "none";
+  syncViewButtons();
+  hashLock = false;
+}
+
+/* ---------------- wiring ---------------- */
+function syncViewButtons() {
+  $("vGrid").setAttribute("aria-pressed", String(S.view === "grid"));
+  $("vTable").setAttribute("aria-pressed", String(S.view === "table"));
+}
+
+let qTimer = null;
+$("q").addEventListener("input", function (e) {
+  const v = e.target.value;
+  $("qClear").hidden = !v;
+  clearTimeout(qTimer);
+  qTimer = setTimeout(function () { S.q = v.trim(); writeHash(); render(); }, 110);
+});
+$("qClear").onclick = function () {
+  $("q").value = ""; $("qClear").hidden = true; S.q = ""; writeHash(); render(); $("q").focus();
+};
+$("vGrid").onclick = function () { S.view = "grid"; syncViewButtons(); writeHash(); render(); };
+$("vTable").onclick = function () { S.view = "table"; syncViewButtons(); writeHash(); render(); };
+$("resetAll").onclick = function () {
+  S.q = ""; $("q").value = ""; $("qClear").hidden = true;
+  S.filters = {}; writeHash(); render();
+};
+$("refresh").onclick = function () { load(true); };
+$("filtToggle").onclick = function () {
+  S.facetsOpen = !S.facetsOpen;
+  $("filtToggle").setAttribute("aria-expanded", String(S.facetsOpen));
+  render();
+};
+$("theme").onclick = function () {
+  const cur = document.documentElement.getAttribute("data-theme");
+  const next = cur === "dark" ? "light" : cur === "light" ? "dark"
+    : (matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "dark");
+  document.documentElement.setAttribute("data-theme", next);
+  store("rpgTheme", next);
+};
+$("dClose").onclick = closeDetail;
+$("scrim").onclick = closeDetail;
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") closeDetail();
+  if (e.key === "/" && document.activeElement !== $("q")) { e.preventDefault(); $("q").focus(); }
+});
+window.addEventListener("hashchange", function () { readHash(); render(); });
+
+(function boot() {
+  const t = store("rpgTheme");
+  if (t) document.documentElement.setAttribute("data-theme", t);
+  $("footNote").textContent = "Reads a published Google Sheet as CSV. Press / to search.";
+  load(false);
+})();
+</script>
+</body>
+</html>
