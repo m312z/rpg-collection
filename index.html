@@ -51,8 +51,13 @@ header.top{position:sticky;top:0;z-index:30;background:var(--bg-header, var(--bg
 
 .split{display:grid;grid-template-columns:246px 1fr;gap:22px;align-items:start;padding-block:4px 40px}
 @media (max-width:860px){.split{grid-template-columns:1fr;gap:0}}
-aside.facets{position:sticky;top:60px;max-height:calc(100vh - 76px);overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px 14px 14px;box-shadow:var(--shadow)}
-@media (max-width:860px){aside.facets{position:static;max-height:none;margin-bottom:16px}}
+/* The whole sidebar column scrolls as one, so the view panel and the filter
+   panel stay stacked together and the page beside them keeps its own scroll.
+   The negative inline margin gives each panel's box-shadow room to paint
+   without the scroll container clipping it, while keeping the grid alignment. */
+.side{position:sticky;top:60px;max-height:calc(100vh - 76px);overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding-inline:3px;margin-inline:-3px}
+@media (max-width:860px){.side{position:static;max-height:none;overflow:visible;margin-bottom:16px}}
+aside.facets{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px 14px 14px;box-shadow:var(--shadow);flex:none}
 .facet{border-top:1px solid var(--line);padding:11px 0 3px}
 .facet:first-child{border-top:0}
 .facet h3{margin:0 0 8px;font:600 11px/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);display:flex;align-items:center;justify-content:space-between;gap:6px}
@@ -81,10 +86,14 @@ aside.facets{position:sticky;top:60px;max-height:calc(100vh - 76px);overflow-y:a
 .tri{display:flex;gap:5px}
 .tri button{flex:1;justify-content:center}
 
-.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.toolbar label{font-size:12.5px;color:var(--ink-3)}
-.toolbar select{padding:6px 8px;background:var(--panel);border:1px solid var(--line-2);border-radius:8px;outline:none}
+.sselect{width:100%;padding:7px 9px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:8px;outline:none;cursor:pointer}
+.sselect:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.sideacts{display:flex;flex-direction:column;gap:6px}
+.sideacts .btn{width:100%;justify-content:center}
 .active-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+/* No active filters means no pill row at all, so the cards/table meet the top
+   of the column instead of sitting under an empty gap. */
+.active-pills:empty{display:none}
 .pill{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--line-2);border-radius:999px;padding:3px 6px 3px 10px;font-size:12px}
 .pill b{font-weight:600}
 .pill button{border:0;background:none;color:inherit;cursor:pointer;font-size:15px;line-height:1;padding:0 3px;border-radius:50%}
@@ -200,17 +209,29 @@ footer.foot a{color:var(--ink-2)}
 </div>
 
 <main class="wrap split" id="split">
-  <aside class="facets" id="facets"></aside>
+  <div class="side">
+    <!-- Same .facets panel shell as the filter panel below it, so the two read
+         as one stack of sidebar controls. -->
+    <aside class="facets" id="viewPanel">
+      <div class="facet">
+        <h3><label for="sort">Sort</label></h3>
+        <select class="sselect" id="sort"></select>
+      </div>
+      <div class="facet">
+        <h3><label for="group">Group</label></h3>
+        <select class="sselect" id="group"></select>
+      </div>
+      <div class="facet">
+        <div class="sideacts">
+          <button class="btn sm" id="shareBtn" type="button"
+            title="Copy a link that carries the sheet and the current view">Copy shareable link</button>
+          <button class="btn sm" id="resetAll" type="button" hidden>Reset all</button>
+        </div>
+      </div>
+    </aside>
+    <aside class="facets" id="facets"></aside>
+  </div>
   <section>
-    <div class="toolbar">
-      <label for="sort">Sort</label>
-      <select id="sort"></select>
-      <label for="group">Group</label>
-      <select id="group"></select>
-      <button class="btn sm" id="resetAll" type="button" hidden>Reset all</button>
-      <button class="btn sm" id="shareBtn" type="button"
-        title="Copy a link that carries the sheet and the current view">Copy shareable link</button>
-    </div>
     <div class="active-pills" id="pills"></div>
     <div id="results"></div>
   </section>
@@ -962,7 +983,7 @@ function render() {
   // With no data at all, the notice panel is the whole message — don't
   // surround it with empty search, sort and filter chrome.
   const hasData = total > 0;
-  document.querySelector(".toolbar").hidden = !hasData;
+  $("viewPanel").hidden = !hasData;
   $("facets").hidden = !hasData;
   document.querySelector(".search").hidden = !hasData;
   $("vGrid").parentNode.hidden = !hasData;
