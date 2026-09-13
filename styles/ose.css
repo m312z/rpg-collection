@@ -9,12 +9,12 @@
    supply custom-property values. */
 :root{
   color-scheme: light;
-  --bg:#f3efe4; --bg-sunk:#e9e3d2; --bg-header:#e22120; --panel:#ffffff; --panel-2:#f6f3ea;
-  --ink:#141211; --ink-2:#3a3a38; --ink-3:#8a8580;
-  --line:#d6cdb4; --line-2:#171412;
-  --accent:#e22120; --accent-ink:#ffffff; --accent-soft:#f7dcdb;
-  --ok:#3f7d43; --ok-soft:#e2efe0;
-  --shadow:0 1px 2px rgba(20,15,10,.08), 0 4px 14px rgba(20,15,10,.06);
+  --bg:#efefef; --bg-sunk:#D8EDD6; --bg-header:#222222; --panel:#ffffff; --panel-2:#efefef;
+  --ink:#222222; --ink-2:#3a3a3a; --ink-3:#8a8580;
+  --line:#cccccc; --line-2:#222222;
+  --accent:#222222; --accent-ink:#efefef; --accent-soft:#D8EDD6;
+  --ok:#222222; --ok-soft:#C3CCE9;
+  --shadow:0 1px 2px rgba(15,20,10,.08), 0 4px 14px rgba(15,20,10,.06);
 }
 
 /* Bold white masthead lettering on the red banner, in place of --ink. */
@@ -31,7 +31,7 @@
 /* A thick red rule under each section heading — the book's own device for
    separating sections — instead of a thin grey hairline. */
 .group>h2{
-  border-bottom:3px solid var(--accent);
+  border-bottom:1px solid var(--accent);
   font-weight:800;
 }
 
