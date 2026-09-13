@@ -1,0 +1,22 @@
+/* Default style: warm parchment palette, light by default and following the
+   system light/dark setting automatically. Selected via the style dropdown
+   in the page header; see ../index.html for how styles/*.css are swapped. */
+:root{
+  color-scheme: light dark;
+  --bg:#f7f4ee; --bg-sunk:#efeae0; --panel:#fffdf9; --panel-2:#f4f0e7;
+  --ink:#1f1b16; --ink-2:#5f574c; --ink-3:#8b8073;
+  --line:#ddd5c7; --line-2:#c9bfad;
+  --accent:#8c2f39; --accent-ink:#ffffff; --accent-soft:#f3e3e4;
+  --ok:#2f6b4f; --ok-soft:#e3efe7;
+  --shadow:0 1px 2px rgba(31,27,22,.06), 0 4px 14px rgba(31,27,22,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#16151a; --bg-sunk:#100f13; --panel:#1e1d24; --panel-2:#262530;
+    --ink:#ece7df; --ink-2:#b3aca1; --ink-3:#847d72;
+    --line:#302e39; --line-2:#413e4c;
+    --accent:#d96a74; --accent-ink:#1a1014; --accent-soft:#33222a;
+    --ok:#6fbf94; --ok-soft:#1d2c25;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.3);
+  }
+}

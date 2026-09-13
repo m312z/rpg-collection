@@ -8,7 +8,8 @@ date and there is nothing to export, sync or rebuild. It is read-only by
 construction: the page only ever issues a `GET`, and a published-to-web CSV
 link cannot be written through.
 
-No build step, no dependencies, no framework — `index.html` is the whole thing.
+No build step, no dependencies, no framework — `index.html` is the whole
+thing, aside from the small stylesheets under `styles/` (see below).
 
 ## Using it with your own sheet
 
@@ -53,9 +54,26 @@ sends no CORS header to a null origin. The page detects that case and says so.
 - Faceted filters with live result counts that update against the other filters
 - Card and table views; sortable columns; grouping by any category or by decade
 - A detail panel for each entry
-- Light and dark themes, following the system setting
+- Switchable styles (`styles/*.css`) — Default follows the system light/dark
+  setting, Dark forces dark regardless of it
 - Shareable URLs — search, filters, sort and grouping are all in the address
 - Works down to phone width
+
+## Adding a style
+
+Each file in `styles/` is a self-contained palette: the same set of CSS
+custom properties (`--bg`, `--ink`, `--accent`, ...), just different values.
+The page links whichever one is selected in the style dropdown; nothing else
+about the layout lives in these files.
+
+To add one:
+
+1. Copy `styles/default.css` to `styles/yourname.css` and change the colors.
+2. Add `<option value="yourname">Your Name</option>` to `#styleSelect` and
+   `"yourname"` to the `STYLES` array, both in `index.html`.
+
+The chosen style is remembered per browser (`localStorage`), the same way the
+sheet link is.
 
 ## Columns are inferred, not configured
 

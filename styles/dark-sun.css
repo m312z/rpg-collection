@@ -1,0 +1,42 @@
+/* Dark Sun style: inspired by the Shattered Lands box art — dark stone and
+   ash for structure, a warm sandy undertone on panels, bone/khaki text, and
+   the crimson sun reserved for accent moments: the header's ember glow,
+   pressed chips, and the bronze-leather Type tag. Forced dark regardless of
+   the OS setting, like styles/dark.css. Selected via the style dropdown in
+   the page header; see ../index.html for how styles/*.css are loaded after
+   the shared styles, so the rules below can override them outright, not
+   just supply custom-property values. */
+:root{
+  color-scheme: dark;
+  --bg:#1b1a18; --bg-sunk:#121110; --bg-header:#332c22; --panel:#2b2620; --panel-2:#362f24;
+  --ink:#f0dfc0; --ink-2:#c9a876; --ink-3:#8f7856;
+  --line:#4a4642; --line-2:#6b6560;
+  --accent:#e2571f; --accent-ink:#1a0f08; --accent-soft:#3d2211;
+  --ok:#4fa88a; --ok-soft:#1c2f28;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 6px 20px rgba(0,0,0,.4);
+}
+
+/* Gold-to-bronze gradient title, echoing the game logo's carved lettering. */
+.brand h1{
+  background: linear-gradient(180deg, #f3d68a 0%, #d98a2e 55%, #a85a1a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* A thin ember glow under the header, fading at both ends — the box art's
+   flame frame runs along one edge, not all four, so the rest of the chrome
+   (cards, facets, table rules) stays plain ash-grey via --line/--line-2. */
+header.top::after{
+  content:"";
+  position:absolute; left:0; right:0; bottom:-1px; height:3px;
+  background: linear-gradient(90deg, transparent, var(--accent) 15%, #ffb35c 50%, var(--accent) 85%, transparent);
+  pointer-events:none;
+}
+
+/* Bronze leather, not flat accent, for the Type pill — pulled from the
+   character's gear rather than the sun itself. */
+.tag.type{
+  background:#3f2a17;
+  color:#d9a565;
+}

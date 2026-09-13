@@ -6,35 +6,10 @@
 <title>RPG Collection</title>
 <style>
 :root{
-  color-scheme: light dark;
-  --bg:#f7f4ee; --bg-sunk:#efeae0; --panel:#fffdf9; --panel-2:#f4f0e7;
-  --ink:#1f1b16; --ink-2:#5f574c; --ink-3:#8b8073;
-  --line:#ddd5c7; --line-2:#c9bfad;
-  --accent:#8c2f39; --accent-ink:#ffffff; --accent-soft:#f3e3e4;
-  --ok:#2f6b4f; --ok-soft:#e3efe7;
-  --shadow:0 1px 2px rgba(31,27,22,.06), 0 4px 14px rgba(31,27,22,.05);
   --radius:10px;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#16151a; --bg-sunk:#100f13; --panel:#1e1d24; --panel-2:#262530;
-    --ink:#ece7df; --ink-2:#b3aca1; --ink-3:#847d72;
-    --line:#302e39; --line-2:#413e4c;
-    --accent:#d96a74; --accent-ink:#1a1014; --accent-soft:#33222a;
-    --ok:#6fbf94; --ok-soft:#1d2c25;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.3);
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#16151a; --bg-sunk:#100f13; --panel:#1e1d24; --panel-2:#262530;
-  --ink:#ece7df; --ink-2:#b3aca1; --ink-3:#847d72;
-  --line:#302e39; --line-2:#413e4c;
-  --accent:#d96a74; --accent-ink:#1a1014; --accent-soft:#33222a;
-  --ok:#6fbf94; --ok-soft:#1d2c25;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.3);
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -45,7 +20,7 @@ button,input,select{font:inherit;color:inherit}
 a{color:var(--accent)}
 
 .wrap{max-width:1240px;margin:0 auto;padding-inline:16px}
-header.top{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid var(--line)}
+header.top{position:sticky;top:0;z-index:30;background:var(--bg-header, var(--bg));border-bottom:1px solid var(--line)}
 .top-in{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-block:10px}
 .brand{display:flex;align-items:baseline;gap:10px;min-width:0}
 .brand h1{font:600 19px/1.2 var(--serif);margin:0;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -170,6 +145,27 @@ table.list td.num{font-family:var(--mono);font-size:12.5px;color:var(--ink-2)}
 footer.foot{border-top:1px solid var(--line);padding:16px 0 34px;color:var(--ink-3);font-size:12px}
 footer.foot a{color:var(--ink-2)}
 </style>
+<!-- Loaded after the shared styles above, so a style's rules win ties in the
+     cascade — not just its custom properties, but any selector it overrides
+     outright (see styles/dark-sun.css for an example). -->
+<link rel="stylesheet" id="themeStyle" href="styles/dark-sun.css">
+<script>
+/* Apply a saved style choice before first paint, so switching away from the
+   default Dark Sun style doesn't flash it first. The rest of the
+   style-switching logic (and the rpgTheme -> rpgStyle migration) lives in
+   the main script, once the DOM and the store() helper exist. */
+(function () {
+  try {
+    var s = localStorage.getItem("rpgStyle");
+    if (!s) {
+      var legacy = localStorage.getItem("rpgTheme");
+      if (legacy === "dark") s = "dark";
+      else if (legacy === "light") s = "default";
+    }
+    if (s && s !== "dark-sun") document.getElementById("themeStyle").href = "styles/" + s + ".css";
+  } catch (e) { /* private mode / blocked storage */ }
+})();
+</script>
 </head>
 <body>
 
@@ -189,7 +185,11 @@ footer.foot a{color:var(--ink-2)}
       <button id="vTable" type="button" aria-pressed="false">Table</button>
     </div>
     <button class="btn" id="refresh" type="button" title="Re-read the sheet">&#8635;</button>
-    <button class="btn" id="theme" type="button" title="Toggle light / dark">&#9682;</button>
+    <select class="btn" id="styleSelect" aria-label="Style" title="Choose a style">
+      <option value="default">Default</option>
+      <option value="dark">Dark</option>
+      <option value="dark-sun">Dark Sun</option>
+    </select>
   </div>
 </header>
 
@@ -1295,13 +1295,30 @@ $("resetAll").onclick = function () {
   S.filters = {}; writeHash(); render();
 };
 $("refresh").onclick = function () { load(true); };
-$("theme").onclick = function () {
-  const cur = document.documentElement.getAttribute("data-theme");
-  const next = cur === "dark" ? "light" : cur === "light" ? "dark"
-    : (matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "dark");
-  document.documentElement.setAttribute("data-theme", next);
-  store("rpgTheme", next);
-};
+
+/* ---------------- style switching ---------------- */
+/* Each style is a standalone stylesheet under styles/ defining the same set
+   of color custom properties; switching swaps which one is linked. Keep this
+   list in sync with the <option>s on #styleSelect. */
+const STYLES = ["default", "dark", "dark-sun"];
+function applyStyle(name, persist) {
+  if (STYLES.indexOf(name) === -1) name = "dark-sun";
+  $("themeStyle").href = "styles/" + name + ".css";
+  $("styleSelect").value = name;
+  if (persist) store("rpgStyle", name);
+}
+function initialStyle() {
+  const saved = store("rpgStyle");
+  if (saved) return saved;
+  // Migrate the old light/dark toggle's preference the first time this runs.
+  const legacy = store("rpgTheme");
+  store("rpgTheme", null);
+  if (legacy === "dark") return "dark";
+  if (legacy === "light") return "default";
+  return "dark-sun";
+}
+$("styleSelect").onchange = function () { applyStyle($("styleSelect").value, true); };
+
 $("dClose").onclick = closeDetail;
 $("scrim").onclick = closeDetail;
 document.addEventListener("keydown", function (e) {
@@ -1311,8 +1328,7 @@ document.addEventListener("keydown", function (e) {
 window.addEventListener("hashchange", function () { readHash(); render(); });
 
 (function boot() {
-  const t = store("rpgTheme");
-  if (t) document.documentElement.setAttribute("data-theme", t);
+  applyStyle(initialStyle(), true);
   $("footNote").textContent = "Reads a published Google Sheet as CSV. Press / to search.";
   wireShare();
   load(false);
