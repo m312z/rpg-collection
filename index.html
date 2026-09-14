@@ -775,12 +775,49 @@ function closeDropdowns() {
     openDropdown = null;
   }
 }
+
+/* The panel is fixed-positioned, so it has to be re-anchored to its button
+   whenever the page scrolls or the viewport changes. On mobile the soft
+   keyboard does both at once -- it resizes the viewport and scrolls the
+   focused field into view -- so closing on those events slammed the dropdown
+   shut the moment it opened. Re-anchor instead, and only close once the
+   button itself has been scrolled out of sight. */
+function positionDropdown() {
+  if (!openDropdown) return;
+  const btn = openDropdown.btn, panel = openDropdown.panel;
+  const r = btn.getBoundingClientRect();
+  if (r.bottom < 0 || r.top > window.innerHeight) { closeDropdowns(); return; }
+  /* The visual viewport is the part not covered by the keyboard; fixed
+     positioning still works in layout-viewport coordinates, so only the room
+     available above/below is measured against it. */
+  const vv = window.visualViewport;
+  const vTop = vv ? vv.offsetTop : 0;
+  const vBottom = vTop + (vv ? vv.height : window.innerHeight);
+  const below = vBottom - r.bottom - 12;
+  const above = r.top - vTop - 12;
+  const flip = below < 180 && above > below;
+  panel.style.left = r.left + "px";
+  panel.style.width = r.width + "px";
+  if (flip) {
+    panel.style.top = "";
+    panel.style.bottom = (window.innerHeight - r.top + 4) + "px";
+  } else {
+    panel.style.bottom = "";
+    panel.style.top = (r.bottom + 4) + "px";
+  }
+  openDropdown.list.style.maxHeight =
+    Math.max(110, Math.min(240, (flip ? above : below) - 46)) + "px";
+}
 document.addEventListener("click", closeDropdowns);
 window.addEventListener("scroll", function (e) {
   if (openDropdown && e.target.nodeType && openDropdown.panel.contains(e.target)) return;
-  closeDropdowns();
+  positionDropdown();
 }, true);
-window.addEventListener("resize", closeDropdowns);
+window.addEventListener("resize", positionDropdown);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", positionDropdown);
+  window.visualViewport.addEventListener("scroll", positionDropdown);
+}
 
 /* A facet with many values (System, Family, ...) collapses into a closed
    dropdown button; its checkbox panel is appended to <body> and positioned
@@ -833,16 +870,16 @@ function buildCheckboxDropdown(col, box, clearBtn) {
     e.stopPropagation();
     if (!panel.hidden) { closeDropdowns(); return; }
     closeDropdowns();
-    const r = btn.getBoundingClientRect();
-    panel.style.left = r.left + "px";
-    panel.style.top = (r.bottom + 4) + "px";
-    panel.style.width = r.width + "px";
     panel.hidden = false;
     wrap.classList.add("open");
-    openDropdown = { wrap: wrap, panel: panel };
+    openDropdown = { wrap: wrap, panel: panel, btn: btn, list: list };
     searchInp.value = "";
     rows.forEach(function (r) { r.hidden = false; });
-    searchInp.focus();
+    positionDropdown();
+    /* Focus the filter box only where typing is free. On touch this would
+       raise the keyboard over the options the dropdown just opened to show;
+       tapping the box still focuses it. */
+    if (matchMedia("(hover: hover) and (pointer: fine)").matches) searchInp.focus({ preventScroll: true });
   };
   searchInp.oninput = function () {
     const q = fold(searchInp.value.trim());
