@@ -43,6 +43,17 @@ header.top{position:sticky;top:0;z-index:30;background:var(--bg-header, var(--bg
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 
+/* Played-so-far bar, riding under the masthead inside the sticky header.
+   It carries its own band background rather than inheriting --bg-header,
+   so its label stays --ink on every style — the OSE masthead is dark while
+   the page beneath it is not. */
+.prog{background:var(--bg);border-top:1px solid var(--line)}
+.prog-in{display:flex;align-items:center;gap:10px;padding-block:7px}
+.prog .track{flex:1 1 auto;height:8px;border-radius:999px;background:var(--ok-soft);border:1px solid var(--line);overflow:hidden}
+.prog .fill{display:block;height:100%;background:var(--ok);border-radius:inherit;transition:width .35s ease}
+.prog .pct{font:500 12px/1 var(--mono);color:var(--ink-2);white-space:nowrap}
+@media (max-width:560px){.prog .long{display:none}}
+
 .status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 0 9px;font-size:12.5px;color:var(--ink-2)}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--ink-3);flex:none}
 .dot.live{background:var(--ok)}
@@ -55,7 +66,7 @@ header.top{position:sticky;top:0;z-index:30;background:var(--bg-header, var(--bg
    panel stay stacked together and the page beside them keeps its own scroll.
    The negative inline margin gives each panel's box-shadow room to paint
    without the scroll container clipping it, while keeping the grid alignment. */
-.side{position:sticky;top:60px;max-height:calc(100vh - 76px);overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding-inline:3px;margin-inline:-3px}
+.side{position:sticky;top:calc(var(--head-h, 56px) + 4px);max-height:calc(100vh - var(--head-h, 56px) - 20px);overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding-inline:3px;margin-inline:-3px}
 @media (max-width:860px){.side{position:static;max-height:none;overflow:visible;margin-bottom:16px}}
 aside.facets{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px 14px 14px;box-shadow:var(--shadow);flex:none}
 .facet{border-top:1px solid var(--line);padding:11px 0 3px}
@@ -198,6 +209,13 @@ footer.foot a{color:var(--ink-2)}
       <option value="ose">OSE</option>
     </select>
   </div>
+  <div class="prog" id="progress" hidden>
+    <div class="wrap prog-in">
+      <div class="track" id="progTrack" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+           aria-label="Collection progress"><span class="fill" id="progFill"></span></div>
+      <span class="pct" id="progLabel"></span>
+    </div>
+  </div>
 </header>
 
 <div class="wrap">
@@ -271,7 +289,12 @@ const CONFIG = {
   csvUrl: "",
   fallbackUrl: "sample-data.csv",
   titleColumn: "Title",
-  pageTitle: "RPG Collection"
+  pageTitle: "RPG Collection",
+  /* The bar under the masthead: what share of `of` (a yes/no column) is
+     true, counted over the rows whose `within` column holds one of `types`.
+     An empty types list counts every row; an empty `of` switches the bar
+     off, as does a sheet without those columns. */
+  progress: { of: "Played", within: "Type", types: ["Core Rules", "Campaign"] }
 };
 
 /* ---------------- tiny helpers ---------------- */
@@ -604,6 +627,7 @@ function load_sampleFallback() {
   $("facets").innerHTML = "";
   $("results").innerHTML = "";
   $("countLabel").textContent = "";
+  renderProgress();
 }
 
 function sampleNotice() {
@@ -958,8 +982,61 @@ function facetCounts(col) {
   return counts;
 }
 
+/* ---------------- progress ---------------- */
+/* Deliberately measured against the whole collection rather than the rows
+   currently shown: this is how far through the shelf you are, not a readout
+   of the search box. */
+function progressStats() {
+  const cfg = CONFIG.progress || {};
+  if (!cfg.of || !DATA.rows.length) return null;
+  const flag = DATA.cols.find(function (c) { return c.name === cfg.of && c.kind === "bool"; });
+  const within = cfg.within ? DATA.cols.find(function (c) { return c.name === cfg.within; }) : null;
+  if (!flag || (cfg.within && !within)) return null;
+  const wanted = (cfg.types || []).map(function (t) { return t.toLowerCase(); });
+  let total = 0, done = 0;
+  DATA.rows.forEach(function (rec) {
+    if (wanted.length && wanted.indexOf(String(rec[within.name] || "").trim().toLowerCase()) === -1) return;
+    total++;
+    if (isTrue(rec[flag.name])) done++;
+  });
+  return total ? { done: done, total: total, pct: Math.round(done / total * 100) } : null;
+}
+
+function renderProgress() {
+  const box = $("progress");
+  const st = progressStats();
+  box.hidden = !st;
+  if (st) {
+    const noun = (CONFIG.progress.types || []).map(function (t) {
+      return /s$/i.test(t) ? t : t + "s";
+    }).join(" + ");
+    const full = CONFIG.progress.of + " " + st.done + " of " + st.total +
+      (noun ? " " + noun : "") + " — " + st.pct + "%";
+    $("progFill").style.width = st.pct + "%";
+    $("progTrack").setAttribute("aria-valuenow", String(st.pct));
+    $("progTrack").setAttribute("aria-valuetext", full);
+    const lab = $("progLabel");
+    lab.textContent = "";
+    lab.appendChild(document.createTextNode(CONFIG.progress.of + " " + st.done + " / " + st.total));
+    if (noun) lab.appendChild(el("span", "long", " " + noun));
+    lab.appendChild(document.createTextNode(" · " + st.pct + "%"));
+    box.title = full;
+  }
+  syncHeadHeight();
+}
+
+/* The sidebar sticks below the header, so the header's real height — which
+   the band above changes, and which a wrapped header row changes again —
+   has to reach the stylesheet. */
+function syncHeadHeight() {
+  const h = document.querySelector("header.top").offsetHeight;
+  document.documentElement.style.setProperty("--head-h", h + "px");
+}
+window.addEventListener("resize", syncHeadHeight);
+
 /* ---------------- render ---------------- */
 function render() {
+  renderProgress();
   const shown = sortRows(DATA.rows.filter(matches));
   const total = DATA.rows.length;
 
